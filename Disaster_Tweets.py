@@ -16,7 +16,6 @@ from nltk.corpus import stopwords
 from collections import Counter
 
 # Machine Learning Libraries
-from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn import preprocessing
 from sklearn.metrics import f1_score, ConfusionMatrixDisplay, confusion_matrix, accuracy_score, classification_report
@@ -58,7 +57,21 @@ train['keyword'].value_counts().head(10).plot(kind = 'bar')
 plt.xlabel('Keywords')
 plt.ylabel('Frequency');
 
-# Cleaning the Dataset Features
+## Cleaning and Preprocess Dataset Features
+def nan_remover(df):
+    '''
+    This function removes all nan values and replaces them with spaces and then concatenates
+    the three columns in the dataset into one
+    '''
+    for col in df.columns:
+        df[col] = df[col].fillna('')
+        
+    df['input'] = df['keyword'].astype(str) + '_' + df['location'] + '_' + df['text']
+    
+    return df
+​
+train = nan_remover(train)
+test = nan_remover(test)
 
 # Remove Unwanted Characters from Text Using Text Cleaner Function
 def text_cleaner(text):
@@ -83,18 +96,18 @@ def text_cleaner(text):
     
     return text
 
-# Use Text Cleaner on Datsets
-train['text'] = train['text'].apply(text_cleaner)
-test['text'] = test['text'].apply(text_cleaner)
+# Use Text Cleaner on Datasets
+train['input'] = train['input'].apply(text_cleaner)
+test['input'] = test['input'].apply(text_cleaner)
 
-# Create Function to Tokenize and Stem Text Data
+# Create Tokens in Dataset Feature
 def func_token(df):
     '''
     This function creates the tokens column, scans and takes out the stopwords and
     goes on to stem the tokenized text and update the token count.
     '''
     # Create Token Count Column
-    df['tokens'] = df['text'].apply(word_tokenize)
+    df['tokens'] = df['input'].apply(word_tokenize)
     
     # Apply StopWorks Method on Tokens Column
     stop_words = set(stopwords.words('english'))   
@@ -106,25 +119,75 @@ def func_token(df):
     
     rare_words = set(word for word, count in word_counts.items() if count < 5)
     df['tokens'] = df['tokens'].apply(lambda x: [word for word in x if word not in rare_words])
+    df['tokens'] = df.tokens.apply(', '.join)
         
     return df
-
-# Use Function on Train and Test Dataset
 trr = func_token(train)
 tee = func_token(test)
 
 ## Split Datasets into Target/Features and Vectorize Features
 
 # Separate features and target variable
-X_train = trr["text"]
+X_train = trr["tokens"]
 y_train = trr["target"]
-X_test = tee["text"]
-
-# Initialize TF-IDF vectorizer
-tfidf_vectorizer = TfidfVectorizer(max_features=5000)
-
+X_test = tee["tokens"]
+​
+# Initialize Vectorizer (TF-IDF or Count)
+vectorizer = CountVectorizer()
+​
 # Fit and transform on training data
-X_train = tfidf_vectorizer.fit_transform(X_train)
-
+X_train = vectorizer.fit_transform(X_train)
+​
 # Transform test data
-X_test = tfidf_vectorizer.fit_transform(X_test)
+X_test = vectorizer.transform(X_test)
+​
+# Split the training data into training and validation sets
+X_train_split, X_val_split, y_train_split, y_val_split = train_test_split(X_train, y_train, test_size=0.2, random_state=420)
+
+## Logistic Regression Model
+# Instantiate Logistic Regression Model
+model = LogisticRegression()
+
+# Train the Model
+model.fit(X_train_split, y_train_split)
+accuracy = model.score(X_train_split, y_train_split)
+print(f" Training Accuracy: {accuracy}")
+
+# Make Predictions on the validation set
+val_predictions = model.predict(X_val_split)
+
+# Calculate F1 and Accuracy score on the validation set
+f1 = f1_score(y_val_split, val_predictions)
+print(f" Validation F1 Score: {f1}")
+accuracy = accuracy_score(y_val_split, val_predictions)
+print(f" Validation Accuracy: {accuracy}")
+
+# Make predictions on the test set
+predictions = model.predict(X_test)
+
+# Export Prediction to Dataframe 
+results = pd.DataFrame({'id': test['id'], 'target': predictions})
+
+## Naive Bayes Model (Complement Naive Bayes)
+# Instantiate the Complement Naive Bayes Model
+model = ComplementNB()
+
+# Train the Model
+model.fit(X_train_split, y_train_split)
+accuracy = model.score(X_train_split, y_train_split)
+print(f" Training Accuracy: {accuracy}")
+
+# Make Predictions on the validation set
+val_predictions = model.predict(X_val_split)
+
+# Calculate F1 and Accuracy score on the validation set
+f1 = f1_score(y_val_split, val_predictions)
+print(f" Validation F1 Score: {f1}")
+accuracy = accuracy_score(y_val_split, val_predictions)
+print(f" Validation Accuracy: {accuracy}")
+
+# Make predictions on the test set
+predictions = model.predict(X_test)
+
+# Export Prediction to Dataframe 
+results = pd.DataFrame({'id': test['id'], 'target': predictions})
