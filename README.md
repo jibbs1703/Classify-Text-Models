@@ -22,6 +22,14 @@ Subject (subject of news article) and the Date (publish date of news article). L
 category of the news - True/Real news texts take a label of 1 while fake news texts take a label of 0. The 
 model(s) used would predict the validity label of news texts. 
 
+**Spam Message Detection** : The dataset for the detection of spam messages was obtained from [Kaggle]
+(https://www.kaggle.com/datasets/ashfakyeafi/spam-email-classification). The dataset contains two columns - 
+Category and Message columns. There are two categories of messages - 'Spam', which indicates that the email
+is classified as fake while 'Ham' denotes that the email is legitimate. The Message column contains the actual
+content of the email messages. The model(s) used would predict the validity of email messages as either spam 
+or ham. Labels are created for each category of messages - spam messages take a label of 1 while non-spam (ham)
+messages take a label of 0. The model(s) used would predict the validity label of the messages. 
+
 ## Chronology of Analysis
 - Import necessary libraries and datasets.
 - Make general check on data for missing values or inappropriate datatypes present.
@@ -43,6 +51,9 @@ correctly predicted the validity of 78.42%  of tweets in the test dataset (0.784
 and the F1 scores were recorded.The Logistic Regression Cross Validation Model correctly predicted the validity
 category of 99.51%  of the news texts in the test dataset (0.9951 F1 score).
 
+**Spam Detection** : The Logistic Regression Cross Validation Model was used to classify whether email messages 
+were either spam or ham and the F1 scores were recorded.The Logistic Regression Cross Validation Model correctly
+predicted the validity category of 94.37%  of the email messages in the test dataset (0.9437 F1 score).
 
 ## Authors
 - [Abraham Ajibade](https://www.linkedin.com/in/abraham-olakunle-1b90bb310) 
